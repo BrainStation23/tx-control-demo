@@ -1,0 +1,134 @@
+﻿@using TXTextControl.Web.MVC.DocumentViewer
+@using System.Text
+@model string
+
+@{
+    ViewData["Title"] = "Word Signing Form";  
+
+    var signingRequestId = ViewData["SigningRequestId"];
+    var signingRequestFormId = ViewData["SigningRequestFormId"];
+    var signingActionId = ViewData["SigningActionId"];
+    var signingRequestSignerId = ViewData["SigningRequestSignerId"];
+    var signerTypeId = ViewData["SignerTypeId"];
+}
+
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-box mt-0 mb-0">
+            <div class="card-body no-padding d-flex justify-content-end">
+                <div class="col-6">
+                    <h2 class="mt-1 mb-1">Signing Form</h2>
+                    <p class="text-warning"></p>
+                </div>
+                <div class="col-6 d-flex flex-grow-1 justify-content-end align-items-center" align="right">
+                    <a href="" class="btn btn-danger doc-action" data-approved="false">Reject</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        @Html.TXTextControl().DocumentViewer(settings =>
+        {
+        settings.DocumentPath = ViewData["DataPath"].ToString();
+        //settings.DocumentPath = ("https://localhost:5001/App_Data/Booking_Form_1_0_0.tx");
+        //settings.DocumentData = Model;
+        settings.Dock = DocumentViewerSettings.DockStyle.Fill;
+        settings.IsSelectionActivated = false;
+        settings.ShowThumbnailPane = true;
+
+        settings.SignatureSettings = new SignatureSettings()
+        {
+        SignatureBoxes = new SignatureBox[]{
+        new SignatureBox("SignatureBoxName")
+        {
+        SigningRequired = true, Style = SignatureBox.SignatureBoxStyle.Signature }
+        },
+
+        //SignatureBoxName = ViewData["SignatureBoxName"].ToString(),
+        ShowSignatureBar = true,
+        UniqueId = Guid.NewGuid().ToString(),
+
+
+        //TODO: Redirect url will be change
+        RedirectUrlAfterSignature = this.Url.Action("SubmitDoc", "Signing",
+        new{area="Forms", signingRequestId = signingRequestId, signingRequestFormId = signingRequestFormId, signingActionId = signingActionId,
+        signingRequestSignerId = signingRequestSignerId, signerTypeId = signerTypeId}, Context.Request.Scheme, null),
+
+        SignerName = "SignerName",
+        OwnerName = "OwnerName",
+        //CustomSigning = false,
+        //CustomSignatureData = new {
+        //SignerId = "44164"
+        //}
+        };
+
+        }).Render()
+    </div>
+</div>
+
+
+<script>
+
+
+    window.addEventListener("documentViewerLoaded", function () {
+        TXDocumentViewer.signatures.setSubmitCallback(exportPDF);
+
+
+        TXDocumentViewer.signatures.setSubmitCallback(completeSigning);
+        TXDocumentViewer.addEventListener("signaturesCompleted", function () {
+            $("#signatureModal").modal('show');
+        });
+    });
+
+
+    function exportPDF(){
+            alert("export");
+    }
+
+    function completeSigning(e) {
+
+        //var serviceURL = "/forms/FormView/SignedReport";
+        var reviewURL = `/forms/signing/ReviewDoc?signingRequestId=@ViewData["SigningRequestId"]&signingRequestFormId=@ViewData["SigningRequestFormId"]&signingActionId=@ViewData["SigningActionId"]&signingRequestSignerId=@ViewData["SigningRequestSignerId"]&signerTypeId=@ViewData["SignerTypeId"]`;
+
+        //var reviewURL = `/forms/Signing/ReviewDoc?signingRequestId=${'@signingRequestId'}&signingRequestFormId=${@signingRequestFormId}&signingActionId=${@signingActionId}&signingRequestSignerId=${@signingRequestSignerId}&signerTypeId=${@signerTypeId}`;
+
+        //var reviewURL = `/forms/Signing/ReviewDoc?signingRequestId=${@signingRequestId}&signingRequestFormId=${@signingRequestFormId}&signingActionId=${@signingActionId}&signingRequestSignerId=${@signingRequestSignerId}&signerTypeId=${@signerTypeId}`;
+
+        setTimeout(function () {
+            // window.open(reviewURL).focus();
+            window.location.href = reviewURL;
+        }, 2000);
+
+        // send document to controller
+        //debugger;
+        //$.ajax({
+        //    type: "POST",
+        //    url: serviceURL,
+        //    data: {
+        //        Document: e.document,
+        //        SignerName: e.signerName,
+        //        UniqueId: e.uniqueId,
+        //        SignerInitials: e.signerInitials
+        //    },
+        //    success: successFunc,
+        //    error: errorFunc
+        //});
+
+
+    }
+
+    function successFunc(data, status) {
+
+        //window.location.href = "/forms/FormView/ViewReport/" + data;
+        window.location.href = data;
+    }
+
+    function errorFunc() {
+        alert("Error");
+    }
+</script>
